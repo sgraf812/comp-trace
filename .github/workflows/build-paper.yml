@@ -5,20 +5,24 @@ jobs:
   build_latex:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Build PDF
-        uses: xu-cheng/texlive-action/full@v1
-        with:
-          run: |
-            apk add make
-            make -C paper comp-trace.pdf comp-trace-ext.pdf
+        run: |
+          cd paper/
+          nix build
       - name: Upload as release
         uses: xresloader/upload-to-github-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "paper/comp-trace*.pdf"
+          file: "paper/result/comp-trace*.pdf"
           branches: main
           tag_name: "Latest"
           overwrite: true
+          draft: false
+      - name: Run tests
+        run: |
+          cd paper/
+          nix develop --command bash -c "make test"
